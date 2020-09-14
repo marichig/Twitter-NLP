@@ -17,9 +17,8 @@ class TweetCollector:
                  *,
     environment_name_30_day = None,
     environment_names_full = None,
-    rate_lim_standard = (180, 900, 100),
-    rate_lim_full = (30, 60, 100),
-    rate_lim_30_day = (30, 60, 100),
+    premium_full = False,
+    premium_30_day = False,
     output_folder = ""
     ):
         '''
@@ -50,12 +49,19 @@ class TweetCollector:
 
         self.auth = tweepy.AppAuthHandler(self.CONSUMER_KEY, self.CONSUMER_SECRET)
         self.api = tweepy.API(self.auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
-
+        
+        self.rate_lim_standard = (180, 900, 100)
+        self.rate_lim_full = (30, 60, 100)
+        self.rate_lim_30_day = (30, 60, 100)
+        
+        self.rate_lim_full_premium = (60, 60, 500)
+        self.rate_lim_30_day_premium = (60, 60, 500)
+        
         self.rate_limits = {
             #name: (number of calls/time unit, time unit in seconds, max tweets per request)
-            "standard": rate_lim_standard,
-            "30 day": rate_lim_full,
-            "full": rate_lim_30_day
+            "standard": self.rate_lim_standard,
+            "30 day": self.rate_lim_30_day_premium if premium_30_day else self.rate_lim_30_day,
+            "full": self.rate_lim_full_premium if premium_full else self.rate_lim_full
                       }
         self.output_folder = output_folder
 
@@ -165,8 +171,8 @@ class TweetCollector:
         for query in queries:
             print("Reverse collecting for", query)
             end_time = end_date_object
-            while start_date_object < end_time:
-
+            while start_date_object < end_time and start_date_object.strftime('%Y%m%d%H%M') != end_time.strftime('%Y%m%d%H%M'):
+                print(end_time)
                 self.protect_rate_limit(call_counter, self.rate_limits[mode])
 
                 try:
